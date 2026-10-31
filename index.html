@@ -197,7 +197,7 @@ const PASTEL=['#8fb3d9','#9bc4a8','#e8a0a0','#b9a3d9','#f2b987','#86c5c9','#eaa9
 const DEEP=['#2f5f9e','#2f7a52','#a33a3a','#6b4a9c','#c0651a','#1f7f8a','#a8325e','#5a7d1f','#475569','#7a5c2e'];
 const COLORS=[...DEEP,...PASTEL];
 const vivid=c=>{const i=PASTEL.indexOf(c);return i>=0&&i<DEEP.length?DEEP[i]:i>=0?`color-mix(in srgb,${c} 60%,#000)`:c};
-const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false};
+const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false,showTomorrow:true};
 
 let lists={},tasks={},view='myday',sel=null,settings={id:'settings',kind:'settings'},q='',showDone=true,session=null;
 const S=()=>({...DEF,...settings});
@@ -363,6 +363,7 @@ function tasksOf(v){
   const all=Object.values(tasks),td=today();
   if(v==='search'){const k=q.trim().toLowerCase();return k?all.filter(t=>((t.title||'')+' '+(t.notes||'')).toLowerCase().includes(k)):[]}
   if(v==='myday')return all.filter(t=>t.myDay===td||(S().dueToday&&t.due===td));
+  if(v==='tomorrow'){const tm=addDays(td,1);return all.filter(t=>t.myDay===tm)}
   if(v==='important')return all.filter(t=>t.star);
   if(v==='planned')return all.filter(t=>t.due);
   if(v==='all')return all;
@@ -373,7 +374,7 @@ function suggestions(){
   return Object.values(tasks).filter(t=>!t.done&&t.myDay!==td&&!(S().dueToday&&t.due===td)&&t.due&&t.due<=lim);
 }
 const byOrder=(a,b)=>(a.order||0)-(b.order||0);
-// ordre manuel (champ « ord » par liste, « dayOrd » pour Ma journée) ; sans ordre manuel : étoilées d'abord, puis date de création
+// ordre manuel (champ « ord » par liste, « dayOrd » pour Aujourd’hui) ; sans ordre manuel : étoilées d'abord, puis date de création
 function sortOpen(arr,field){
   const s=S();
   const rank=t=>(field&&t[field]!=null)?1:(s.starTop&&t.star?-1:(s.addTop?0:2));
@@ -390,6 +391,11 @@ function nextOrd(field,group){
   if(!vals.length)return undefined;
   return S().addTop?Math.min(...vals)-1:Math.max(...vals)+1;
 }
+function setTomorrow(t,on){
+  const o={...t,myDay:on?addDays(today(),1):null};
+  if(on){const d=nextOrd('dayOrd',tasksOf('tomorrow').filter(x=>x.id!==t.id&&!x.done));if(d!==undefined)o.dayOrd=d}
+  save(o);
+}
 function setMyDay(t,on){
   const o={...t,myDay:on?today():null};
   if(on){const d=nextOrd('dayOrd',tasksOf('myday').filter(x=>x.id!==t.id&&!x.done));if(d!==undefined)o.dayOrd=d}
@@ -398,17 +404,19 @@ function setMyDay(t,on){
 const visible=k=>{
   if(k==='myday'||k==='search'||!NAMES[k])return true;
   const s=S();
+  if(k==='tomorrow'&&!s.showTomorrow)return false;
   if(k==='important'&&!s.showImportant)return false;
   if(k==='planned'&&!s.showPlanned)return false;
   if(k==='all'&&!s.showAll)return false;
   if(s.hideEmpty&&view!==k&&!tasksOf(k).some(t=>!t.done))return false;
   return true;
 };
-const NAMES={myday:'Ma journée',important:'Important',planned:'Planifié',all:'Toutes',search:'Recherche'};
+const NAMES={myday:'Aujourd’hui',tomorrow:'Demain',important:'Important',planned:'Planifié',all:'Toutes',search:'Recherche'};
 
 /* ---------- Rendu ---------- */
 function navIcon(k){
   if(k==='myday')return '<span class="ic">☀️</span>';
+  if(k==='tomorrow')return '<span class="ic">🌙</span>';
   if(k==='important')return `<span class="ic" style="color:#a8325e">${ic('star')}</span>`;
   if(k==='planned')return `<span class="ic" style="color:#1f7a6d">${ic('cal')}</span>`;
   return `<span class="ic" style="color:var(--acc)">${ic('home')}</span>`;
@@ -417,7 +425,7 @@ function renderSide(){
   const cnt=v=>tasksOf(v).filter(t=>!t.done).length;
   const em=(session&&session.user&&session.user.email)||'';
   let h=`<div class="acct"><div class="avatar">${esc((em.slice(0,2)||'?').toUpperCase())}</div><div class="who"><b>${esc(em.split('@')[0])}</b><br><span class="sm">${esc(em)}</span></div><button class="ib" id="gosearch" title="Rechercher">${ic('search')}</button></div>`;
-  for(const k of ['myday','important','planned','all'])if(visible(k))
+  for(const k of ['myday','tomorrow','important','planned','all'])if(visible(k))
     h+=`<button class="nav ${view===k?'on':''}" data-v="${k}">${navIcon(k)}${NAMES[k]}<span class="n">${cnt(k)||''}</span></button>`;
   h+='<hr>';
   Object.values(lists).sort(byOrder).forEach(l=>{
@@ -436,8 +444,8 @@ function render(){
   renderSide();
   const l=lists[view];
   $('#title').textContent=NAMES[view]||(l?l.name:'');
-  $('#sub').textContent=view==='myday'?new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):'';
-  $('#sub').hidden=view!=='myday';
+  $('#sub').textContent=(view==='myday'||view==='tomorrow')?(view==='tomorrow'?new Date(addDays(today(),1)+'T12:00:00'):new Date()).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):'';
+  $('#sub').hidden=!(view==='myday'||view==='tomorrow');
   $('#sugbtn').hidden=view!=='myday';
   $('#searchbar').hidden=view!=='search';
   $('#addbar').style.display=view==='search'?'none':'';
@@ -452,8 +460,8 @@ function plannedGroups(open){
     return a.length?`<h3>${n}</h3>`+a.map(row).join(''):'';
   }).join('');
 }
-const reorderable=()=>view==='myday'||!!lists[view];
-const orderField=()=>view==='myday'?'dayOrd':(lists[view]?'ord':null);
+const reorderable=()=>view==='myday'||view==='tomorrow'||!!lists[view];
+const orderField=()=>(view==='myday'||view==='tomorrow')?'dayOrd':(lists[view]?'ord':null);
 function renderList(){
   if(drag&&drag.mode==='reorder')return;
   const items=tasksOf(view);
@@ -473,14 +481,16 @@ function row(t){
   const lst=lists[t.list];
   const steps=t.steps||[],sd=steps.filter(s=>s.done).length;
   const bits=[];
-  if(inMyDay(t)&&view!=='myday')bits.push('<span>☀️ Ma journée</span>');
+  if(inMyDay(t)&&view!=='myday')bits.push('<span>☀️ Aujourd’hui</span>');
+  if(t.myDay===addDays(today(),1)&&view!=='tomorrow')bits.push('<span>🌙 Demain</span>');
   if(lst&&view!==t.list)bits.push(`<span>${esc(lst.name)}</span>`);
   if(steps.length)bits.push(`<span>${sd} sur ${steps.length}</span>`);
   if(t.due)bits.push(`<span class="${isLate(t)?'late':''}">${ic('cal',13)}${fmt(t.due)}</span>`);
   if(t.rep)bits.push(`<span>${ic('rep',13)}</span>`);
   if(t.notes)bits.push(`<span>${ic('note',13)}</span>`);
-  const dayLbl=inMyDay(t)?'☀️ Retirer de Ma journée':'☀️ Ajouter à Ma journée';
-  return `<div class="wrap" data-w="${t.id}"><div class="bg"><span class="bgl">${dayLbl}</span><span class="bgr">Supprimer</span></div><div class="task ${t.done?'done':''} ${t.list==='l_rdv_pro'?'rdv':''}" data-id="${t.id}">
+  const dayLbl=inMyDay(t)?'☀️ Retirer d’Aujourd’hui':'☀️ Ajouter à Aujourd’hui';
+  const tomLbl=t.myDay===addDays(today(),1)?'🌙 Retirer de Demain':'🌙 Mettre à Demain';
+  return `<div class="wrap" data-w="${t.id}"><div class="bg"><span class="bgl">${dayLbl}</span><span class="bgr">${tomLbl}</span></div><div class="task ${t.done?'done':''} ${t.list==='l_rdv_pro'?'rdv':''}" data-id="${t.id}">
     <span class="chk" data-chk="${t.id}">${t.done?ic('check',14):''}</span>
     <div class="t">${esc(t.title)}${bits.length?`<div class="meta">${bits.join('')}</div>`:''}</div>
     <button class="star ${t.star?'on':''}" data-star="${t.id}" aria-label="Important">${ic(t.star?'starf':'star',22)}</button></div></div>`;
@@ -493,7 +503,8 @@ function renderDetail(){
   <input class="title" id="d-title" value="${esc(t.title)}">
   <div id="steps">${(t.steps||[]).map((s,i)=>`<div class="step"><span class="chk" style="${s.done?'background:var(--acc);border-color:var(--acc)':''};width:21px;height:21px" data-sc="${i}">${s.done?ic('check',12):''}</span><input class="s" data-si="${i}" value="${esc(s.t)}" style="${s.done?'text-decoration:line-through;color:var(--muted)':''}"><button class="sm" data-sd="${i}">${ic('x',18)}</button></div>`).join('')}</div>
   <div class="step"><span style="color:var(--acc)">${ic('add',20)}</span><input class="s" id="newstep" placeholder="Ajouter une étape"></div>
-  <div class="row"><span style="font-size:19px;line-height:1">☀️</span><span>Ma journée</span><button id="d-day" style="margin-left:auto;color:var(--acc)">${inMyDay(t)?'Retirer':'Ajouter'}</button></div>
+  <div class="row"><span style="font-size:19px;line-height:1">☀️</span><span>Aujourd’hui</span><button id="d-day" style="margin-left:auto;color:var(--acc)">${inMyDay(t)?'Retirer':'Ajouter'}</button></div>
+  <div class="row"><span style="font-size:19px;line-height:1">🌙</span><span>Demain</span><button id="d-tom" style="margin-left:auto;color:var(--acc)">${t.myDay===addDays(today(),1)?'Retirer':'Ajouter'}</button></div>
   <div class="row">${ic('cal',20)}<span>Échéance</span><input type="date" id="d-due" value="${t.due||''}">${t.due?`<button id="d-nodue" class="sm">${ic('x',18)}</button>`:''}</div>
   <div class="row">${ic('rep',20)}<span>Répéter</span><select id="d-rep" style="margin-left:auto">
     ${[['','Jamais'],['d','Chaque jour'],['w','Chaque semaine'],['m','Chaque mois'],['y','Chaque année']].map(([v,l])=>`<option value="${v}" ${(t.rep||'')===v?'selected':''}>${l}</option>`).join('')}</select></div>
@@ -565,10 +576,11 @@ function openSettings(){
    ${tg('starTop','Déplacer les tâches marquées d’une étoile vers le haut')}
    ${tg('sound','Lire l’alerte sonore d’achèvement')}
    ${tg('confirmDel','Demander confirmation avant de supprimer')}
-   ${tg('dueToday','Afficher les tâches « Échéance aujourd’hui » dans Ma journée')}
+   ${tg('dueToday','Afficher les tâches « Échéance aujourd’hui » dans Aujourd’hui')}
    ${tg('parseDates','Reconnaître les dates dans les titres des tâches')}
    ${tg('stripDates','Supprimer les dates des titres des tâches une fois reconnues')}
    <div class="lbl" style="margin-top:16px">Listes intelligentes</div>
+   ${tg('showTomorrow','Afficher « Demain »')}
    ${tg('showImportant','Afficher « Important »')}
    ${tg('showPlanned','Afficher « Planifié »')}
    ${tg('showAll','Afficher « Toutes »')}
@@ -627,11 +639,47 @@ function openMore(){
     }
   });
 }
+function openTaskMenu(id){
+  const t=tasks[id];if(!t||document.querySelector('.ov'))return;
+  const item=(a,i,tx,st='')=>`<button data-a="${a}" style="${st}">${i.startsWith('<')||i.length<4&&!ICONS[i]?`<span style="width:22px;text-align:center;font-size:19px">${i}</span>`:ic(i,22)}${tx}</button>`;
+  const tom=addDays(today(),1);
+  const d=dialog(`<p class="sm" style="margin:0 0 6px">${esc(t.title)}</p><div class="menu">
+    ${item('day','☀️',inMyDay(t)?'Retirer d’Aujourd’hui':'Ajouter à Aujourd’hui')}
+    ${item('tom','🌙',t.myDay===tom?'Retirer de Demain':'Mettre à Demain')}
+    ${item('star',t.star?'starf':'star',t.star?'Retirer des importantes':'Marquer comme importante')}
+    ${item('due0','cal','Échéance : aujourd’hui')}
+    ${item('due1','cal','Échéance : demain')}
+    ${item('due7','cal','Échéance : lundi prochain')}
+    ${item('duep','cal','Choisir une date…')}
+    ${t.due?item('duex','x','Supprimer l’échéance'):''}
+    ${item('mv','list','Déplacer vers une liste…')}
+    ${item('del','del','Supprimer','color:#dc2626')}</div>`);
+  d.addEventListener('click',e=>{
+    const a=e.target.closest('[data-a]');if(!a)return;
+    d.remove();
+    const k=a.dataset.a,td=today();
+    if(k==='day')setMyDay(t,!inMyDay(t));
+    else if(k==='tom')setTomorrow(t,t.myDay!==tom);
+    else if(k==='star')toggleStar(t);
+    else if(k==='due0')save({...t,due:td});
+    else if(k==='due1')save({...t,due:tom});
+    else if(k==='due7'){const n=(8-new Date(td+'T12:00:00').getDay())%7||7;save({...t,due:addDays(td,n)})}
+    else if(k==='duep'){sel=id;render()}
+    else if(k==='duex')save({...t,due:'',rep:''});
+    else if(k==='mv'){
+      const m=dialog(`<b>Déplacer vers</b><div class="menu">${Object.values(lists).sort(byOrder).map(l=>`<button data-l="${l.id}"><span class="ic" style="color:${vivid(l.color)};width:22px;display:grid;place-items:center">${ic('list',22)}</span>${esc(l.name)}</button>`).join('')}</div>`);
+      m.addEventListener('click',ev=>{const b=ev.target.closest('[data-l]');if(b){save({...t,list:b.dataset.l});m.remove()}});
+    }else if(k==='del'){
+      const go=()=>{if(sel===id)sel=null;store.del(id);toast('Tâche supprimée',()=>save(t))};
+      S().confirmDel?confirmDialog('Supprimer cette tâche ?',go):go();
+    }
+  });
+}
 function openSuggestions(){
   const d=dialog('');
   const draw=()=>{
     const sug=suggestions().sort((a,b)=>a.due.localeCompare(b.due));
-    d.querySelector('.box').innerHTML=`<h2>Suggestions</h2>`+(sug.length?sug.map(t=>`<div class="sug"><div class="t">${esc(t.title)}<div class="meta"><span class="${isLate(t)?'late':''}">${ic('cal',13)}${fmt(t.due)}</span></div></div><button class="ib" data-sg="${t.id}" title="Ajouter à Ma journée">${ic('add')}</button></div>`).join(''):'<p class="sm">Aucune suggestion pour le moment.</p>')+`<div class="btns"><button data-close class="pri">Fermer</button></div>`;
+    d.querySelector('.box').innerHTML=`<h2>Suggestions</h2>`+(sug.length?sug.map(t=>`<div class="sug"><div class="t">${esc(t.title)}<div class="meta"><span class="${isLate(t)?'late':''}">${ic('cal',13)}${fmt(t.due)}</span></div></div><button class="ib" data-sg="${t.id}" title="Ajouter à Aujourd’hui">${ic('add')}</button></div>`).join(''):'<p class="sm">Aucune suggestion pour le moment.</p>')+`<div class="btns"><button data-close class="pri">Fermer</button></div>`;
   };
   draw();
   d.addEventListener('click',e=>{const b=e.target.closest('[data-sg]');if(b){setMyDay(tasks[b.dataset.sg],true);draw()}});
@@ -723,11 +771,14 @@ function endLDrag(e){
 document.addEventListener('pointerup',endLDrag);
 document.addEventListener('pointercancel',endLDrag);
 const LIM=90,HOLD=380,GAP=2;
+let lastPT='';
 document.addEventListener('pointerdown',e=>{
+  lastPT=e.pointerType;
+  if(e.button===2)return;
   const task=e.target.closest('.task');
   if(!task||e.target.closest('button,.chk'))return;
   drag={task,id:task.dataset.id,x:e.clientX,y:e.clientY,curY:e.clientY,dx:0,mode:null,pid:e.pointerId,bg:task.parentElement.querySelector('.bg'),timer:null};
-  if(reorderable()&&!task.classList.contains('done'))drag.timer=setTimeout(startReorder,HOLD);
+  drag.timer=setTimeout(startReorder,HOLD);
 });
 document.addEventListener('pointermove',e=>{
   if(!drag||e.pointerId!==drag.pid)return;
@@ -744,21 +795,31 @@ document.addEventListener('pointermove',e=>{
   drag.task.style.transition='none';
   drag.task.style.transform=`translateX(${dx}px)`;
   const right=dx>0,ok=Math.abs(dx)>=LIM;
-  drag.bg.style.background=right?'#d98a00':'#dc2626';
+  drag.bg.style.background=right?'#d98a00':'#1e40af';
   drag.bg.style.opacity=ok?1:.7;
   drag.bg.querySelector('.bgl').style.opacity=right?1:0;
   drag.bg.querySelector('.bgr').style.opacity=right?0:1;
 });
 // empêche le défilement de la page pendant qu'on déplace une tâche
 document.addEventListener('touchmove',e=>{if(drag&&drag.mode==='reorder')e.preventDefault()},{passive:false});
-document.addEventListener('contextmenu',e=>{if(e.target.closest('.task'))e.preventDefault()});
+document.addEventListener('contextmenu',e=>{
+  const task=e.target.closest('.task');if(!task)return;
+  e.preventDefault();
+  if(lastPT==='mouse'&&!document.querySelector('.ov')){if(drag){clearTimeout(drag.timer);drag=null}openTaskMenu(task.dataset.id)}
+});
 
 function startReorder(){
   if(!drag||drag.mode)return;
+  if(!reorderable()||drag.task.classList.contains('done')){
+    const id=drag.id;drag=null;swiped=true;setTimeout(()=>swiped=false,500);
+    try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}
+    openTaskMenu(id);return;
+  }
   const wrapEl=drag.task.parentElement;
   const rows=[...document.querySelectorAll('#list .wrap')].filter(w=>!w.querySelector('.task.done'));
   const start=rows.indexOf(wrapEl);
-  if(start<0||rows.length<2){drag=null;return}
+  if(start<0){drag=null;return}
+  if(rows.length<2){const id=drag.id;drag=null;swiped=true;setTimeout(()=>swiped=false,500);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}openTaskMenu(id);return}
   drag.mode='reorder';
   drag.rows=rows;drag.start=start;drag.idx=start;
   drag.rects=rows.map(r=>{const b=r.getBoundingClientRect();return{top:b.top,h:b.height}});
@@ -796,7 +857,7 @@ function endReorder(cancel){
   const d=drag;drag=null;clearInterval(autoT);
   d.rows.forEach(r=>{r.style.transition='';r.style.transform='';r.classList.remove('lift')});
   swiped=true;setTimeout(()=>swiped=false,200);
-  if(cancel||d.idx===d.start){renderList();return}
+  if(cancel||d.idx===d.start){renderList();if(!cancel&&Math.abs(d.curY-d.y)<12)openTaskMenu(d.id);return}
   const ids=d.rows.map(w=>w.dataset.w);
   const m=ids.splice(d.start,1)[0];ids.splice(d.idx,0,m);
   const f=orderField();
@@ -815,8 +876,9 @@ function endDrag(e){
   const t=tasks[d.id];if(!t||e.type==='pointercancel')return;
   if(d.dx>=LIM){setMyDay(t,!inMyDay(t))}
   else if(d.dx<=-LIM){
-    const go=()=>{if(sel===t.id)sel=null;store.del(t.id);toast('Tâche supprimée',()=>save(t))};
-    S().confirmDel?confirmDialog('Supprimer cette tâche ?',go):go();
+    const before=t,inTom=t.myDay===addDays(today(),1);
+    setTomorrow(t,!inTom);
+    toast(inTom?'Retirée de Demain':'Déplacée dans Demain',()=>save(before));
   }
 }
 document.addEventListener('pointerup',endDrag);
@@ -845,10 +907,10 @@ function addTask(title){
   let due=view==='planned'?today():'';
   if(S().parseDates){const p=parseDate(title);if(p.due){due=p.due;if(S().stripDates&&p.title)title=p.title}}
   const t={id:'t_'+uid(),kind:'task',title,list:lid,done:false,star:view==='important',created:Date.now(),
-    myDay:view==='myday'?today():null,due,steps:[],notes:'',rep:''};
+    myDay:view==='myday'?today():view==='tomorrow'?addDays(today(),1):null,due,steps:[],notes:'',rep:''};
   const o=nextOrd('ord',Object.values(tasks).filter(x=>x.list===lid&&!x.done));
   if(o!==undefined)t.ord=o;
-  if(view==='myday'){const d=nextOrd('dayOrd',tasksOf('myday').filter(x=>!x.done));if(d!==undefined)t.dayOrd=d}
+  if(view==='myday'||view==='tomorrow'){const d=nextOrd('dayOrd',tasksOf(view).filter(x=>!x.done));if(d!==undefined)t.dayOrd=d}
   save(t);
 }
 
@@ -880,6 +942,7 @@ document.addEventListener('click',e=>{
     const go=()=>{sel=null;store.del(id);toast('Tâche supprimée',()=>save(t))};
     S().confirmDel?confirmDialog('Supprimer cette tâche ?',go):go();return}
   if(e.target.closest('#d-day')){const t=tasks[sel];setMyDay(t,!inMyDay(t));return}
+  if(e.target.closest('#d-tom')){const t=tasks[sel];setTomorrow(t,t.myDay!==addDays(today(),1));return}
   if(e.target.closest('#d-nodue')){save({...tasks[sel],due:'',rep:''});return}
   if(el=g('data-sc')){const t=tasks[sel],s=[...t.steps],i=+el.dataset.sc;s[i]={...s[i],done:!s[i].done};save({...t,steps:s});return}
   if(el=g('data-sd')){const t=tasks[sel],s=[...t.steps];s.splice(+el.dataset.sd,1);save({...t,steps:s});return}
