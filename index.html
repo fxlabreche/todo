@@ -44,7 +44,7 @@ input,textarea,select{font:inherit;color:inherit;background:transparent;border:0
 .nav .ic{width:22px;display:grid;place-items:center;flex-shrink:0;font-size:19px;line-height:1}
 hr{border:0;border-top:1px solid var(--line);margin:8px 0;width:100%}
 /* principal */
-#main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:color-mix(in srgb,var(--accent) 9%,var(--bg))}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--mainbg,color-mix(in srgb,var(--accent) 9%,var(--bg)))}
 #head{display:flex;align-items:flex-start;gap:6px;padding:12px 10px 4px}
 .ib{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:var(--acc);flex-shrink:0}
 .ib:hover{background:#00000012}
@@ -63,9 +63,11 @@ h1{margin:0;font-size:29px;font-weight:400;letter-spacing:-.2px;color:var(--acc)
 .wrap.lift{z-index:6;box-shadow:0 8px 22px #0000004d;background:var(--panel);transition:none!important}
 .bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;color:#fff;font-weight:600;font-size:14px;background:transparent}
 .bg span{opacity:0}
-.task{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative;background:var(--panel);border-radius:3px;padding:11px 8px 11px 14px;min-height:60px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
+.task{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative;background:var(--taskbg,var(--panel));border-radius:3px;padding:11px 8px 11px 14px;min-height:60px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
 .chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted);flex-shrink:0;display:grid;place-items:center;color:#fff}
-.task.rdv{box-shadow:var(--shadow),inset 5px 0 0 var(--rc);background:color-mix(in srgb,var(--rc) 12%,var(--panel))}
+.task.rdv{box-shadow:var(--shadow),inset 5px 0 0 var(--rdvline,#1e40af);background:color-mix(in srgb,var(--rdvline,#1e40af) 8%,var(--taskbg,var(--panel)))}
+:root[data-theme=dark] .task.rdv{--rdvline:var(--rdvuser,#60a5fa)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .task.rdv{--rdvline:var(--rdvuser,#60a5fa)}}
 .task.rdv .t{font-weight:600}
 .done .chk{background:var(--acc);border-color:var(--acc)}.done .t{text-decoration:line-through;color:var(--muted)}
 .t{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}
@@ -112,6 +114,10 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:4
 .pal{display:flex;flex-wrap:wrap;gap:2px;margin:2px 0 8px}
 .dot{width:30px;height:30px;border-radius:50%;display:inline-block;cursor:pointer;margin:3px}
 .dot.sel{outline:2px solid var(--text);outline-offset:2px}
+.cpk{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.cpk .cv{font-size:12.5px;color:var(--muted);min-width:56px;text-align:right}
+.cpk input[type=color]{width:38px;height:30px;padding:0;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer}
+.auto{border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:13px;color:var(--acc)}
 .lbl{font-size:12.5px;color:var(--muted);margin:10px 0 0;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .sug{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .sug .t{font-size:16px}
@@ -188,7 +194,8 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const PASTEL=['#8fb3d9','#9bc4a8','#e8a0a0','#b9a3d9','#f2b987','#86c5c9','#eaa9c8','#bdd48a','#a3adbb','#dcc28e','#c9a0a0','#9db7a6'];
 const DEEP=['#2f5f9e','#2f7a52','#a33a3a','#6b4a9c','#c0651a','#1f7f8a','#a8325e','#5a7d1f','#475569','#7a5c2e'];
 const COLORS=[...DEEP,...PASTEL];
-const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system'};
+const vivid=c=>{const i=PASTEL.indexOf(c);return i>=0&&i<DEEP.length?DEEP[i]:i>=0?`color-mix(in srgb,${c} 60%,#000)`:c};
+const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:''};
 
 let lists={},tasks={},view='myday',sel=null,settings={id:'settings',kind:'settings'},q='',showDone=true,session=null;
 const S=()=>({...DEF,...settings});
@@ -257,6 +264,12 @@ function seed(){
 function applyTheme(){
   const t=S().theme;
   if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;else delete document.documentElement.dataset.theme;
+  applyColors();
+}
+function applyColors(){
+  const s=S(),st=document.documentElement.style;
+  const set=(v,c)=>c?st.setProperty(v,c):st.removeProperty(v);
+  set('--text',s.colText);set('--mainbg',s.colBg);set('--taskbg',s.colTask);set('--rdvline',s.colRdv);set('--rdvuser',s.colRdv);
 }
 function applyAccent(){
   document.documentElement.style.setProperty('--accent',lists[view]?lists[view].color:S().accent);
@@ -397,7 +410,7 @@ function renderSide(){
     h+=`<button class="nav ${view===k?'on':''}" data-v="${k}">${navIcon(k)}${NAMES[k]}<span class="n">${cnt(k)||''}</span></button>`;
   h+='<hr>';
   Object.values(lists).sort(byOrder).forEach(l=>{
-    h+=`<button class="nav ${view===l.id?'on':''}" data-v="${l.id}"><span class="ic" style="color:${l.color}">${ic('list')}</span>${esc(l.name)}<span class="n">${cnt(l.id)||''}</span></button>`;
+    h+=`<button class="nav ${view===l.id?'on':''}" data-v="${l.id}"><span class="ic" style="color:${vivid(l.color)}">${ic('list')}</span>${esc(l.name)}<span class="n">${cnt(l.id)||''}</span></button>`;
   });
   h+=`<div style="flex:1"></div><hr>
   <button class="nav" id="newlist" style="color:var(--acc)"><span class="ic">${ic('add')}</span>Nouvelle liste</button>
@@ -455,7 +468,7 @@ function row(t){
   if(t.rep)bits.push(`<span>${ic('rep',13)}</span>`);
   if(t.notes)bits.push(`<span>${ic('note',13)}</span>`);
   const dayLbl=inMyDay(t)?'☀️ Retirer de Ma journée':'☀️ Ajouter à Ma journée';
-  return `<div class="wrap" data-w="${t.id}"><div class="bg"><span class="bgl">${dayLbl}</span><span class="bgr">Supprimer</span></div><div class="task ${t.done?'done':''} ${t.list==='l_rdv_pro'?'rdv':''}" ${t.list==='l_rdv_pro'&&lst?`style="--rc:${lst.color}"`:''} data-id="${t.id}">
+  return `<div class="wrap" data-w="${t.id}"><div class="bg"><span class="bgl">${dayLbl}</span><span class="bgr">Supprimer</span></div><div class="task ${t.done?'done':''} ${t.list==='l_rdv_pro'?'rdv':''}" data-id="${t.id}">
     <span class="chk" data-chk="${t.id}">${t.done?ic('check',14):''}</span>
     <div class="t">${esc(t.title)}${bits.length?`<div class="meta">${bits.join('')}</div>`:''}</div>
     <button class="star ${t.star?'on':''}" data-star="${t.id}" aria-label="Important">${ic(t.star?'starf':'star',22)}</button></div></div>`;
@@ -544,7 +557,10 @@ function openSettings(){
    ${tg('parseDates','Reconnaître les dates dans les titres des tâches')}
    ${tg('stripDates','Supprimer les dates des titres des tâches une fois reconnues')}
    <div class="tg"><span>Thème</span><select data-set="theme">${[['system','Système'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${s.theme===v?'selected':''}>${l}</option>`).join('')}</select></div>
-   <div class="lbl" style="margin-top:16px">Couleur des listes intelligentes</div><div id="accs">${paletteHtml(s.accent)}</div>`;
+   <div class="lbl" style="margin-top:16px">Couleur des listes intelligentes</div><div id="accs">${paletteHtml(s.accent)}</div>
+   <div class="lbl" style="margin-top:22px">Apparence</div>
+   ${[['colText','Couleur des polices','#1f2430'],['colBg','Couleur du fond de l’appli','#e9edf3'],['colTask','Couleur du fond des tâches','#ffffff'],['colRdv','Couleur du liseré des tâches RDV pro','#1e40af']].map(([k,t,d])=>`<div class="tg"><span>${t}</span><span class="cpk"><span class="cv" data-cv="${k}">${s[k]||'Auto'}</span><input type="color" data-set="${k}" value="${s[k]||d}"><button class="auto" data-auto="${k}">Auto</button></span></div>`).join('')}
+   <button class="auto" id="colreset" style="margin-top:8px">Réinitialiser l’apparence</button>`;
   document.body.append(scrim,p);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{scrim.classList.add('open');p.classList.add('open')}));
   const close=()=>{
@@ -556,9 +572,18 @@ function openSettings(){
   swipeClose(p,close,false);
   p.addEventListener('change',e=>{
     const k=e.target.dataset.set;if(!k)return;
+    if(e.target.type==='color'){const cv=p.querySelector(`[data-cv="${k}"]`);if(cv)cv.textContent=e.target.value}
     save({...settings,id:'settings',kind:'settings',[k]:e.target.type==='checkbox'?e.target.checked:e.target.value});
   });
   p.addEventListener('click',e=>{
+    const au=e.target.closest('[data-auto],#colreset');
+    if(au){
+      const ks=au.id==='colreset'?['colText','colBg','colTask','colRdv']:[au.dataset.auto];
+      const o={...settings,id:'settings',kind:'settings'};ks.forEach(k=>o[k]='');
+      save(o);
+      ks.forEach(k=>{const cv=p.querySelector(`[data-cv="${k}"]`);if(cv)cv.textContent='Auto'});
+      return;
+    }
     const c=e.target.closest('[data-c]');if(!c)return;
     save({...settings,id:'settings',kind:'settings',accent:c.dataset.c});
     p.querySelector('#accs').innerHTML=paletteHtml(c.dataset.c);
