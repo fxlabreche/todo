@@ -28,7 +28,7 @@ input,textarea,select{font:inherit;color:inherit;background:transparent;border:0
 /* connexion */
 #login{height:100dvh;display:grid;place-items:center;padding:20px}
 #login form{background:var(--panel);padding:28px;border-radius:8px;width:min(360px,100%);box-shadow:0 2px 12px #0002;display:flex;flex-direction:column;gap:12px}
-#login h2{margin:0 0 4px;font-weight:300;font-size:26px;color:var(--acc)}
+#login h2{margin:0 0 4px;font-weight:400;font-size:26px;color:var(--acc)}
 #login input{border:1px solid var(--line);border-radius:4px;padding:11px}
 #login .go{background:var(--acc);color:#fff;border-radius:4px;padding:12px;font-weight:600}
 #lerr{color:#dc2626;font-size:14px;min-height:18px}
@@ -40,7 +40,7 @@ input,textarea,select{font:inherit;color:inherit;background:transparent;border:0
 .who b{font-weight:600;font-size:15px}
 .nav{display:flex;align-items:center;gap:14px;padding:11px 10px;border-radius:4px;width:100%;text-align:left;font-size:15.5px}
 .nav:hover{background:color-mix(in srgb,var(--text) 6%,transparent)}.nav.on{background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600}
-.nav .n{margin-left:auto;color:var(--muted);font-size:14px;font-weight:350}
+.nav .n{margin-left:auto;color:var(--muted);font-size:14px;font-weight:400}
 .nav .ic{width:22px;display:grid;place-items:center;flex-shrink:0;font-size:19px;line-height:1}
 hr{border:0;border-top:1px solid var(--line);margin:8px 0;width:100%}
 /* principal */
@@ -65,6 +65,8 @@ h1{margin:0;font-size:29px;font-weight:400;letter-spacing:-.2px;color:var(--acc)
 .bg span{opacity:0}
 .task{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative;background:var(--panel);border-radius:3px;padding:11px 8px 11px 14px;min-height:60px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
 .chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted);flex-shrink:0;display:grid;place-items:center;color:#fff}
+.task.rdv{box-shadow:var(--shadow),inset 5px 0 0 var(--rc);background:color-mix(in srgb,var(--rc) 12%,var(--panel))}
+.task.rdv .t{font-weight:600}
 .done .chk{background:var(--acc);border-color:var(--acc)}.done .t{text-decoration:line-through;color:var(--muted)}
 .t{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}
 .meta{font-size:12.5px;color:var(--muted);margin-top:2px;display:flex;flex-wrap:wrap;align-items:center;gap:0 8px}
@@ -95,7 +97,7 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:4
 /* fenêtres */
 .ov{position:fixed;inset:0;background:#0007;display:grid;place-items:center;z-index:60;padding:12px}
 .box{background:var(--panel);border-radius:8px;padding:18px;width:min(400px,100%);max-height:90dvh;overflow:auto}
-.box h2{margin:0 0 6px;font-weight:300;font-size:22px}
+.box h2{margin:0 0 6px;font-weight:400;font-size:22px}
 .box .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 .box .btns button{padding:9px 14px;border-radius:4px}
 .box .pri{color:var(--acc);font-weight:600}
@@ -116,7 +118,7 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:4
 #spanel{position:fixed;top:0;bottom:0;left:0;width:min(440px,100vw);background:var(--panel);z-index:55;transform:translateX(-100%);transition:transform .22s ease;overflow:auto;padding:10px 20px 40px;touch-action:pan-y;box-shadow:0 0 40px #0006}
 #spanel.open{transform:none}
 #spanel .ph{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-#spanel .ph h2{margin:0;font-weight:300;font-size:24px}
+#spanel .ph h2{margin:0;font-weight:400;font-size:24px}
 #sscrim{position:fixed;inset:0;background:#0005;z-index:54;opacity:0;transition:opacity .22s}
 #sscrim.open{opacity:1}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:12px 18px;border-radius:4px;display:none;gap:16px;z-index:70;align-items:center}
@@ -453,7 +455,7 @@ function row(t){
   if(t.rep)bits.push(`<span>${ic('rep',13)}</span>`);
   if(t.notes)bits.push(`<span>${ic('note',13)}</span>`);
   const dayLbl=inMyDay(t)?'☀️ Retirer de Ma journée':'☀️ Ajouter à Ma journée';
-  return `<div class="wrap" data-w="${t.id}"><div class="bg"><span class="bgl">${dayLbl}</span><span class="bgr">Supprimer</span></div><div class="task ${t.done?'done':''}" data-id="${t.id}">
+  return `<div class="wrap" data-w="${t.id}"><div class="bg"><span class="bgl">${dayLbl}</span><span class="bgr">Supprimer</span></div><div class="task ${t.done?'done':''} ${t.list==='l_rdv_pro'?'rdv':''}" ${t.list==='l_rdv_pro'&&lst?`style="--rc:${lst.color}"`:''} data-id="${t.id}">
     <span class="chk" data-chk="${t.id}">${t.done?ic('check',14):''}</span>
     <div class="t">${esc(t.title)}${bits.length?`<div class="meta">${bits.join('')}</div>`:''}</div>
     <button class="star ${t.star?'on':''}" data-star="${t.id}" aria-label="Important">${ic(t.star?'starf':'star',22)}</button></div></div>`;
