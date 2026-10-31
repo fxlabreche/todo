@@ -60,12 +60,14 @@ h1{margin:0;font-size:29px;font-weight:400;letter-spacing:-.2px;color:var(--acc)
 #list>*{flex-shrink:0}
 .lines{flex:1 0 220px!important;margin-top:8px;background:repeating-linear-gradient(to bottom,transparent 0 63px,var(--line) 63px 64px);opacity:.8}
 .wrap{position:relative;margin:1px 0;border-radius:3px;overflow:hidden}
+.nav.lift{position:relative;z-index:6;background:var(--panel);box-shadow:0 8px 22px #0000004d;transition:none!important}
+#side .nav[data-lid]{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .wrap.lift{z-index:6;box-shadow:0 8px 22px #0000004d;background:var(--panel);transition:none!important}
 .bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;color:#fff;font-weight:600;font-size:14px;background:transparent}
 .bg span{opacity:0}
 .task{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative;background:var(--taskbg,var(--panel));border-radius:3px;padding:11px 8px 11px 14px;min-height:60px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
 .chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted);flex-shrink:0;display:grid;place-items:center;color:#fff}
-.task.rdv{box-shadow:var(--shadow),inset 5px 0 0 var(--rdvline,#1e40af);background:color-mix(in srgb,var(--rdvline,#1e40af) 8%,var(--taskbg,var(--panel)))}
+.task.rdv{box-shadow:var(--shadow),inset 5px 0 0 var(--rdvline,#1e40af);background:var(--rdvbg,color-mix(in srgb,var(--rdvline,#1e40af) 8%,var(--taskbg,var(--panel))))}
 :root[data-theme=dark] .task.rdv{--rdvline:var(--rdvuser,#60a5fa)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) .task.rdv{--rdvline:var(--rdvuser,#60a5fa)}}
 .task.rdv .t{font-weight:600}
@@ -195,7 +197,7 @@ const PASTEL=['#8fb3d9','#9bc4a8','#e8a0a0','#b9a3d9','#f2b987','#86c5c9','#eaa9
 const DEEP=['#2f5f9e','#2f7a52','#a33a3a','#6b4a9c','#c0651a','#1f7f8a','#a8325e','#5a7d1f','#475569','#7a5c2e'];
 const COLORS=[...DEEP,...PASTEL];
 const vivid=c=>{const i=PASTEL.indexOf(c);return i>=0&&i<DEEP.length?DEEP[i]:i>=0?`color-mix(in srgb,${c} 60%,#000)`:c};
-const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:''};
+const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false};
 
 let lists={},tasks={},view='myday',sel=null,settings={id:'settings',kind:'settings'},q='',showDone=true,session=null;
 const S=()=>({...DEF,...settings});
@@ -269,7 +271,7 @@ function applyTheme(){
 function applyColors(){
   const s=S(),st=document.documentElement.style;
   const set=(v,c)=>c?st.setProperty(v,c):st.removeProperty(v);
-  set('--text',s.colText);set('--mainbg',s.colBg);set('--taskbg',s.colTask);set('--rdvline',s.colRdv);set('--rdvuser',s.colRdv);
+  set('--text',s.colText);set('--mainbg',s.colBg);set('--taskbg',s.colTask);set('--rdvline',s.colRdv);set('--rdvuser',s.colRdv);set('--rdvbg',s.colRdvBg);
 }
 function applyAccent(){
   document.documentElement.style.setProperty('--accent',lists[view]?lists[view].color:S().accent);
@@ -393,6 +395,15 @@ function setMyDay(t,on){
   if(on){const d=nextOrd('dayOrd',tasksOf('myday').filter(x=>x.id!==t.id&&!x.done));if(d!==undefined)o.dayOrd=d}
   save(o);
 }
+const visible=k=>{
+  if(k==='myday'||k==='search'||!NAMES[k])return true;
+  const s=S();
+  if(k==='important'&&!s.showImportant)return false;
+  if(k==='planned'&&!s.showPlanned)return false;
+  if(k==='all'&&!s.showAll)return false;
+  if(s.hideEmpty&&view!==k&&!tasksOf(k).some(t=>!t.done))return false;
+  return true;
+};
 const NAMES={myday:'Ma journée',important:'Important',planned:'Planifié',all:'Toutes',search:'Recherche'};
 
 /* ---------- Rendu ---------- */
@@ -406,11 +417,11 @@ function renderSide(){
   const cnt=v=>tasksOf(v).filter(t=>!t.done).length;
   const em=(session&&session.user&&session.user.email)||'';
   let h=`<div class="acct"><div class="avatar">${esc((em.slice(0,2)||'?').toUpperCase())}</div><div class="who"><b>${esc(em.split('@')[0])}</b><br><span class="sm">${esc(em)}</span></div><button class="ib" id="gosearch" title="Rechercher">${ic('search')}</button></div>`;
-  for(const k of ['myday','important','planned','all'])
+  for(const k of ['myday','important','planned','all'])if(visible(k))
     h+=`<button class="nav ${view===k?'on':''}" data-v="${k}">${navIcon(k)}${NAMES[k]}<span class="n">${cnt(k)||''}</span></button>`;
   h+='<hr>';
   Object.values(lists).sort(byOrder).forEach(l=>{
-    h+=`<button class="nav ${view===l.id?'on':''}" data-v="${l.id}"><span class="ic" style="color:${vivid(l.color)}">${ic('list')}</span>${esc(l.name)}<span class="n">${cnt(l.id)||''}</span></button>`;
+    h+=`<button class="nav ${view===l.id?'on':''}" data-v="${l.id}" data-lid="${l.id}"><span class="ic" style="color:${vivid(l.color)}">${ic('list')}</span>${esc(l.name)}<span class="n">${cnt(l.id)||''}</span></button>`;
   });
   h+=`<div style="flex:1"></div><hr>
   <button class="nav" id="newlist" style="color:var(--acc)"><span class="ic">${ic('add')}</span>Nouvelle liste</button>
@@ -420,6 +431,7 @@ function renderSide(){
   $('#side').innerHTML=h;status();
 }
 function render(){
+  if(!visible(view))view='myday';
   applyAccent();
   renderSide();
   const l=lists[view];
@@ -556,10 +568,15 @@ function openSettings(){
    ${tg('dueToday','Afficher les tâches « Échéance aujourd’hui » dans Ma journée')}
    ${tg('parseDates','Reconnaître les dates dans les titres des tâches')}
    ${tg('stripDates','Supprimer les dates des titres des tâches une fois reconnues')}
+   <div class="lbl" style="margin-top:16px">Listes intelligentes</div>
+   ${tg('showImportant','Afficher « Important »')}
+   ${tg('showPlanned','Afficher « Planifié »')}
+   ${tg('showAll','Afficher « Toutes »')}
+   ${tg('hideEmpty','Masquer automatiquement les listes intelligentes vides')}
    <div class="tg"><span>Thème</span><select data-set="theme">${[['system','Système'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${s.theme===v?'selected':''}>${l}</option>`).join('')}</select></div>
    <div class="lbl" style="margin-top:16px">Couleur des listes intelligentes</div><div id="accs">${paletteHtml(s.accent)}</div>
    <div class="lbl" style="margin-top:22px">Apparence</div>
-   ${[['colText','Couleur des polices','#1f2430'],['colBg','Couleur du fond de l’appli','#e9edf3'],['colTask','Couleur du fond des tâches','#ffffff'],['colRdv','Couleur du liseré des tâches RDV pro','#1e40af']].map(([k,t,d])=>`<div class="tg"><span>${t}</span><span class="cpk"><span class="cv" data-cv="${k}">${s[k]||'Auto'}</span><input type="color" data-set="${k}" value="${s[k]||d}"><button class="auto" data-auto="${k}">Auto</button></span></div>`).join('')}
+   ${[['colText','Couleur des polices','#1f2430'],['colBg','Couleur du fond de l’appli','#e9edf3'],['colTask','Couleur du fond des tâches','#ffffff'],['colRdv','Couleur du liseré des tâches RDV pro','#1e40af'],['colRdvBg','Couleur du fond des tâches RDV pro','#eceffa']].map(([k,t,d])=>`<div class="tg"><span>${t}</span><span class="cpk"><span class="cv" data-cv="${k}">${s[k]||'Auto'}</span><input type="color" data-set="${k}" value="${s[k]||d}"><button class="auto" data-auto="${k}">Auto</button></span></div>`).join('')}
    <button class="auto" id="colreset" style="margin-top:8px">Réinitialiser l’apparence</button>`;
   document.body.append(scrim,p);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{scrim.classList.add('open');p.classList.add('open')}));
@@ -578,7 +595,7 @@ function openSettings(){
   p.addEventListener('click',e=>{
     const au=e.target.closest('[data-auto],#colreset');
     if(au){
-      const ks=au.id==='colreset'?['colText','colBg','colTask','colRdv']:[au.dataset.auto];
+      const ks=au.id==='colreset'?['colText','colBg','colTask','colRdv','colRdvBg']:[au.dataset.auto];
       const o={...settings,id:'settings',kind:'settings'};ks.forEach(k=>o[k]='');
       save(o);
       ks.forEach(k=>{const cv=p.querySelector(`[data-cv="${k}"]`);if(cv)cv.textContent='Auto'});
@@ -635,6 +652,76 @@ function beep(){
 
 /* ---------- Gestes sur les tâches : glisser (swipe) et appui long (réordonner) ---------- */
 let swiped=false,drag=null,autoT=null;
+/* appui long sur une liste du panneau = la déplacer */
+let ld=null,ldAuto=null,lsw=false;
+document.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('#side .nav[data-lid]');
+  if(!b)return;
+  ld={el:b,x:e.clientX,y:e.clientY,curY:e.clientY,pid:e.pointerId,mode:null,timer:setTimeout(startLReorder,380)};
+});
+document.addEventListener('pointermove',e=>{
+  if(!ld||e.pointerId!==ld.pid)return;
+  ld.curY=e.clientY;
+  if(ld.mode==='reorder'){moveLReorder();return}
+  if(Math.hypot(e.clientX-ld.x,e.clientY-ld.y)>8){clearTimeout(ld.timer);ld=null}
+});
+document.addEventListener('touchmove',e=>{if(ld&&ld.mode==='reorder')e.preventDefault()},{passive:false});
+document.addEventListener('contextmenu',e=>{if(e.target.closest('#side .nav[data-lid]'))e.preventDefault()});
+function startLReorder(){
+  if(!ld||ld.mode)return;
+  const rows=[...document.querySelectorAll('#side .nav[data-lid]')];
+  const start=rows.indexOf(ld.el);
+  if(start<0||rows.length<2){ld=null;return}
+  ld.mode='reorder';ld.rows=rows;ld.start=start;ld.idx=start;
+  ld.rects=rows.map(r=>{const b=r.getBoundingClientRect();return{top:b.top,h:b.height}});
+  ld.scroll0=$('#side').scrollTop;
+  ld.el.classList.add('lift');
+  rows.forEach(r=>{if(r!==ld.el)r.style.transition='transform .15s'});
+  try{ld.el.setPointerCapture(ld.pid)}catch(_){}
+  try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}
+  ldAuto=setInterval(()=>{
+    if(!ld||ld.mode!=='reorder')return;
+    const sd=$('#side'),b=sd.getBoundingClientRect();
+    if(ld.curY<b.top+60)sd.scrollTop-=10;else if(ld.curY>b.bottom-60)sd.scrollTop+=10;
+    moveLReorder();
+  },16);
+  moveLReorder();
+}
+function moveLReorder(){
+  const d=ld;if(!d||d.mode!=='reorder')return;
+  const dy=d.curY-d.y+($('#side').scrollTop-d.scroll0);
+  const me=d.rects[d.start],center=me.top+me.h/2+dy;
+  d.rows[d.start].style.transform=`translateY(${dy}px)`;
+  let n=0;
+  d.rects.forEach((r,i)=>{if(i!==d.start&&r.top+r.h/2<center)n++});
+  d.idx=n;
+  const shift=me.h;
+  d.rows.forEach((r,i)=>{
+    if(i===d.start)return;
+    let sh=0;
+    if(d.start<n&&i>d.start&&i<=n)sh=-shift;
+    else if(d.start>n&&i<d.start&&i>=n)sh=shift;
+    r.style.transform=sh?`translateY(${sh}px)`:'';
+  });
+}
+function endLReorder(cancel){
+  const d=ld;ld=null;clearInterval(ldAuto);
+  d.rows.forEach(r=>{r.style.transition='';r.style.transform='';r.classList.remove('lift')});
+  lsw=true;setTimeout(()=>lsw=false,250);
+  if(cancel||d.idx===d.start){renderSide();return}
+  const ids=d.rows.map(r=>r.dataset.lid);
+  const m=ids.splice(d.start,1)[0];ids.splice(d.idx,0,m);
+  ids.forEach((id,i)=>{const l=lists[id];if(l&&l.order!==i)save({...l,order:i})});
+  renderSide();
+}
+function endLDrag(e){
+  if(!ld||e.pointerId!==ld.pid)return;
+  clearTimeout(ld.timer);
+  if(ld.mode==='reorder'){endLReorder(e.type==='pointercancel');return}
+  ld=null;
+}
+document.addEventListener('pointerup',endLDrag);
+document.addEventListener('pointercancel',endLDrag);
 const LIM=90,HOLD=380,GAP=2;
 document.addEventListener('pointerdown',e=>{
   const task=e.target.closest('.task');
@@ -773,6 +860,7 @@ document.addEventListener('click',e=>{
   let el;
   if(el=g('data-chk')){e.stopPropagation();toggle(tasks[el.dataset.chk]);return}
   if(el=g('data-star')){e.stopPropagation();toggleStar(tasks[el.dataset.star]);return}
+  if(lsw&&g('data-v'))return;
   if(el=g('data-v')){view=el.dataset.v;sel=null;closeSide();render();return}
   if(g('data-dn')){showDone=!showDone;renderList();return}
   if(e.target.closest('#gosearch')){view='search';q='';sel=null;closeSide();render();$('#sq').value='';$('#sq').focus();return}
