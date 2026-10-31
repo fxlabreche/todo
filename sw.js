@@ -1,5 +1,6 @@
-const C = 'todo-v1';
-const FILES = ['./', 'index.html', 'supabase.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+const C = 'todo-v2';
+const FILES = ['./', 'index.html', 'supabase.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png',
+  'fonts/selawk.woff2', 'fonts/selawkl.woff2', 'fonts/selawksl.woff2', 'fonts/selawksb.woff2'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(FILES)));
