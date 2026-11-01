@@ -59,13 +59,13 @@ h1{margin:0;font-size:29px;font-weight:400;letter-spacing:-.2px;color:var(--acc)
 #list{flex:1;overflow:auto;padding:6px 24px 110px;display:flex;flex-direction:column;overscroll-behavior:contain}
 #list>*{flex-shrink:0}
 .lines{flex:1 0 220px!important;margin-top:8px;background:repeating-linear-gradient(to bottom,transparent 0 63px,var(--line) 63px 64px);opacity:.8}
-.wrap{position:relative;margin:1px 0;border-radius:3px;overflow:hidden}
+.wrap{position:relative;margin:1px 0;border-radius:var(--br,3px);overflow:hidden}
 .nav.lift{position:relative;z-index:6;background:var(--panel);box-shadow:0 8px 22px #0000004d;transition:none!important}
 #side .nav[data-lid]{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .wrap.lift{z-index:6;box-shadow:0 8px 22px #0000004d;background:var(--panel);transition:none!important}
 .bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;color:#fff;font-weight:600;font-size:14px;background:transparent}
 .bg span{opacity:0}
-.task{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative;background:var(--taskbg,var(--panel));border-radius:3px;padding:11px 8px 11px 14px;min-height:60px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
+.task{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative;background:var(--taskbg,var(--panel));border-radius:var(--br,3px);border:var(--bw,0px) solid var(--bc,var(--line));padding:11px 8px 11px 14px;min-height:60px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
 .chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted);flex-shrink:0;display:grid;place-items:center;color:#fff}
 .task.rdv{box-shadow:var(--shadow),inset 5px 0 0 var(--rdvline,#1e40af);background:var(--rdvbg,color-mix(in srgb,var(--rdvline,#1e40af) 8%,var(--taskbg,var(--panel))))}
 :root[data-theme=dark] .task.rdv{--rdvline:var(--rdvuser,#60a5fa)}
@@ -117,6 +117,8 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:4
 .dot{width:30px;height:30px;border-radius:50%;display:inline-block;cursor:pointer;margin:3px}
 .dot.sel{outline:2px solid var(--text);outline-offset:2px}
 .cpk{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pre{width:22px;height:22px;border-radius:50%;display:inline-block;cursor:pointer;flex-shrink:0;border:1px solid var(--line)}
+.rng{width:110px;accent-color:var(--acc)}
 .cpk .cv{font-size:12.5px;color:var(--muted);min-width:56px;text-align:right}
 .cpk input[type=color]{width:38px;height:30px;padding:0;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer}
 .auto{border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:13px;color:var(--acc)}
@@ -196,8 +198,10 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const PASTEL=['#8fb3d9','#9bc4a8','#e8a0a0','#b9a3d9','#f2b987','#86c5c9','#eaa9c8','#bdd48a','#a3adbb','#dcc28e','#c9a0a0','#9db7a6'];
 const DEEP=['#2f5f9e','#2f7a52','#a33a3a','#6b4a9c','#c0651a','#1f7f8a','#a8325e','#5a7d1f','#475569','#7a5c2e'];
 const COLORS=[...DEEP,...PASTEL];
+const DEEPUI=[...DEEP,'#1f3f73','#d6b370'];
+const PRE=k=>`<span class="pre" data-pre="#1f3f73" data-k="${k}" title="Bleu profond" style="background:#1f3f73"></span><span class="pre" data-pre="#d6b370" data-k="${k}" title="Doré champagne" style="background:#d6b370"></span>`;
 const vivid=c=>{const i=PASTEL.indexOf(c);return i>=0&&i<DEEP.length?DEEP[i]:i>=0?`color-mix(in srgb,${c} 60%,#000)`:c};
-const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false,showTomorrow:true};
+const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',colSwipeR:'',colSwipeL:'',bordW:'',bordCol:'',bordRad:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false,showTomorrow:true};
 
 let lists={},tasks={},view='myday',sel=null,settings={id:'settings',kind:'settings'},q='',showDone=true,session=null;
 const S=()=>({...DEF,...settings});
@@ -272,6 +276,7 @@ function applyColors(){
   const s=S(),st=document.documentElement.style;
   const set=(v,c)=>c?st.setProperty(v,c):st.removeProperty(v);
   set('--text',s.colText);set('--mainbg',s.colBg);set('--taskbg',s.colTask);set('--rdvline',s.colRdv);set('--rdvuser',s.colRdv);set('--rdvbg',s.colRdvBg);
+  set('--bw',+s.bordW>0?s.bordW+'px':'');set('--bc',s.bordCol);set('--br',s.bordRad!==''&&s.bordRad!=null?s.bordRad+'px':'');
 }
 function applyAccent(){
   document.documentElement.style.setProperty('--accent',lists[view]?lists[view].color:S().accent);
@@ -531,7 +536,7 @@ function confirmDialog(msg,cb,ok='Supprimer'){
   d.querySelector('#cok').onclick=()=>{d.remove();cb()};
 }
 const dots=cur=>c=>`<span class="dot ${cur===c?'sel':''}" data-c="${c}" style="background:${c}"></span>`;
-const paletteHtml=cur=>`<div class="lbl">Pastel</div><div class="pal">${PASTEL.map(dots(cur)).join('')}</div><div class="lbl">Classique</div><div class="pal">${DEEP.map(dots(cur)).join('')}</div>`;
+const paletteHtml=cur=>`<div class="lbl">Pastel</div><div class="pal">${PASTEL.map(dots(cur)).join('')}</div><div class="lbl">Classique</div><div class="pal">${DEEPUI.map(dots(cur)).join('')}</div>`;
 
 /* geste « glisser vers la gauche pour fermer » */
 function swipeClose(el,close,onlyMobile){
@@ -588,7 +593,11 @@ function openSettings(){
    <div class="tg"><span>Thème</span><select data-set="theme">${[['system','Système'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${s.theme===v?'selected':''}>${l}</option>`).join('')}</select></div>
    <div class="lbl" style="margin-top:16px">Couleur des listes intelligentes</div><div id="accs">${paletteHtml(s.accent)}</div>
    <div class="lbl" style="margin-top:22px">Apparence</div>
-   ${[['colText','Couleur des polices','#1f2430'],['colBg','Couleur du fond de l’appli','#e9edf3'],['colTask','Couleur du fond des tâches','#ffffff'],['colRdv','Couleur du liseré des tâches RDV pro','#1e40af'],['colRdvBg','Couleur du fond des tâches RDV pro','#eceffa']].map(([k,t,d])=>`<div class="tg"><span>${t}</span><span class="cpk"><span class="cv" data-cv="${k}">${s[k]||'Auto'}</span><input type="color" data-set="${k}" value="${s[k]||d}"><button class="auto" data-auto="${k}">Auto</button></span></div>`).join('')}
+   ${[['colText','Couleur des polices','#1f2430'],['colBg','Couleur du fond de l’appli','#e9edf3'],['colTask','Couleur du fond des tâches','#ffffff'],['colRdv','Couleur du liseré des tâches RDV pro','#1e40af'],['colRdvBg','Couleur du fond des tâches RDV pro','#eceffa'],['colSwipeR','Couleur du glissement à droite (Aujourd’hui)','#d98a00'],['colSwipeL','Couleur du glissement à gauche (Demain)','#1e40af']].map(([k,t,d])=>`<div class="tg"><span>${t}</span><span class="cpk"><span class="cv" data-cv="${k}">${s[k]||'Auto'}</span>${PRE(k)}<input type="color" data-set="${k}" value="${s[k]||d}"><button class="auto" data-auto="${k}">Auto</button></span></div>`).join('')}
+   <div class="lbl" style="margin-top:18px">Bordure des tâches</div>
+   <div class="tg"><span>Épaisseur</span><span class="cpk"><span class="cv" data-cv="bordW">${(+s.bordW||0)}px</span><input class="rng" type="range" min="0" max="6" step="1" data-set="bordW" data-def="0" value="${+s.bordW||0}"></span></div>
+   <div class="tg"><span>Couleur de la bordure</span><span class="cpk"><span class="cv" data-cv="bordCol">${s.bordCol||'Auto'}</span>${PRE('bordCol')}<input type="color" data-set="bordCol" value="${s.bordCol||'#c4c9d2'}"><button class="auto" data-auto="bordCol">Auto</button></span></div>
+   <div class="tg"><span>Arrondi des angles</span><span class="cpk"><span class="cv" data-cv="bordRad">${s.bordRad===''||s.bordRad==null?3:+s.bordRad}px</span><input class="rng" type="range" min="0" max="24" step="1" data-set="bordRad" data-def="3" value="${s.bordRad===''||s.bordRad==null?3:+s.bordRad}"></span></div>
    <button class="auto" id="colreset" style="margin-top:8px">Réinitialiser l’apparence</button>`;
   document.body.append(scrim,p);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{scrim.classList.add('open');p.classList.add('open')}));
@@ -599,6 +608,7 @@ function openSettings(){
   scrim.onclick=close;
   p.querySelector('#sback').onclick=close;
   swipeClose(p,close,false);
+  p.addEventListener('input',e=>{if(e.target.type==='range'){const cv=p.querySelector(`[data-cv="${e.target.dataset.set}"]`);if(cv)cv.textContent=e.target.value+'px'}});
   p.addEventListener('change',e=>{
     const k=e.target.dataset.set;if(!k)return;
     if(e.target.type==='color'){const cv=p.querySelector(`[data-cv="${k}"]`);if(cv)cv.textContent=e.target.value}
@@ -607,10 +617,17 @@ function openSettings(){
   p.addEventListener('click',e=>{
     const au=e.target.closest('[data-auto],#colreset');
     if(au){
-      const ks=au.id==='colreset'?['colText','colBg','colTask','colRdv','colRdvBg']:[au.dataset.auto];
+      const ks=au.id==='colreset'?['colText','colBg','colTask','colRdv','colRdvBg','colSwipeR','colSwipeL','bordW','bordCol','bordRad']:[au.dataset.auto];
       const o={...settings,id:'settings',kind:'settings'};ks.forEach(k=>o[k]='');
       save(o);
-      ks.forEach(k=>{const cv=p.querySelector(`[data-cv="${k}"]`);if(cv)cv.textContent='Auto'});
+      ks.forEach(k=>{const cv=p.querySelector(`[data-cv="${k}"]`),rg=p.querySelector(`input.rng[data-set="${k}"]`);if(rg){rg.value=rg.dataset.def;if(cv)cv.textContent=rg.dataset.def+'px'}else if(cv)cv.textContent='Auto'});
+      return;
+    }
+    const pr=e.target.closest('[data-pre]');
+    if(pr){
+      const k=pr.dataset.k,v=pr.dataset.pre,inp=p.querySelector(`input[type=color][data-set="${k}"]`),cv=p.querySelector(`[data-cv="${k}"]`);
+      if(inp)inp.value=v;if(cv)cv.textContent=v;
+      save({...settings,id:'settings',kind:'settings',[k]:v});
       return;
     }
     const c=e.target.closest('[data-c]');if(!c)return;
@@ -795,7 +812,7 @@ document.addEventListener('pointermove',e=>{
   drag.task.style.transition='none';
   drag.task.style.transform=`translateX(${dx}px)`;
   const right=dx>0,ok=Math.abs(dx)>=LIM;
-  drag.bg.style.background=right?'#d98a00':'#1e40af';
+  drag.bg.style.background=right?(S().colSwipeR||'#d98a00'):(S().colSwipeL||'#1e40af');
   drag.bg.style.opacity=ok?1:.7;
   drag.bg.querySelector('.bgl').style.opacity=right?1:0;
   drag.bg.querySelector('.bgr').style.opacity=right?0:1;
