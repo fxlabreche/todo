@@ -38,9 +38,9 @@ input,textarea,select{font:inherit;color:inherit;background:transparent;border:0
 .avatar{width:34px;height:34px;border-radius:50%;background:#1f3f73;color:#fff;display:grid;place-items:center;font-weight:600;font-size:12.5px;flex-shrink:0}
 .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25}
 .who b{font-weight:600;font-size:15px}
-.nav{display:flex;align-items:center;gap:14px;padding:11px 10px;border-radius:4px;width:100%;text-align:left;font-size:15.5px}
-.nav:hover{background:color-mix(in srgb,var(--text) 6%,transparent)}.nav.on{background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600}
-.nav .n{margin-left:auto;color:var(--muted);font-size:14px;font-weight:400}
+.nav{display:flex;align-items:center;gap:14px;padding:11px 10px;border-radius:4px;width:100%;text-align:left;font-size:15.5px;color:color-mix(in srgb,var(--text) 82%,#000);-webkit-text-stroke:.4px currentColor}
+.nav:hover{background:color-mix(in srgb,var(--text) 6%,transparent)}.nav.on{background:color-mix(in srgb,var(--accent) 16%,transparent);font-weight:600;-webkit-text-stroke:0}
+.nav .n{margin-left:auto;color:var(--muted);font-size:14px;font-weight:400;-webkit-text-stroke:0}
 .nav .ic{width:22px;display:grid;place-items:center;flex-shrink:0;font-size:19px;line-height:1}
 hr{border:0;border-top:1px solid var(--line);margin:8px 0;width:100%}
 /* principal */
@@ -66,12 +66,12 @@ h1{margin:0;font-size:29px;font-weight:400;letter-spacing:-.2px;color:var(--acc)
 .bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;color:#fff;font-weight:600;font-size:14px;background:transparent}
 .bg span{opacity:0}
 .task{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative;background:var(--taskbg,var(--panel));border-radius:var(--br,3px);border:var(--bw,0px) solid var(--bc,var(--line));padding:11px 8px 11px 14px;min-height:60px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
-.chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted);flex-shrink:0;display:grid;place-items:center;color:#fff}
+.chk{position:relative;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted);flex-shrink:0;display:grid;place-items:center;color:#fff}.chk::before{content:'';position:absolute;inset:-14px -11px}
 .task.rdv{box-shadow:var(--shadow),inset 5px 0 0 var(--rdvline,#1e40af);background:var(--rdvbg,color-mix(in srgb,var(--rdvline,#1e40af) 8%,var(--taskbg,var(--panel))))}
 :root[data-theme=dark] .task.rdv{--rdvline:var(--rdvuser,#60a5fa)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) .task.rdv{--rdvline:var(--rdvuser,#60a5fa)}}
-.task.rdv .t{font-weight:600}
-.done .chk{background:var(--acc);border-color:var(--acc)}.done .t{text-decoration:line-through;color:var(--muted)}
+.task.rdv{padding:6px 8px 6px 14px;min-height:44px;gap:12px}.task.rdv .t{font-weight:400;font-size:14.5px;line-height:1.3}.task.rdv .meta{font-size:12px;margin-top:1px;font-weight:400}.task.rdv .chk{width:21px;height:21px}.task.rdv .star{width:32px;height:32px}
+.done .chk{background:var(--acc);border-color:var(--acc)}.done .t{text-decoration:line-through;color:var(--muted);opacity:.72}
 .t{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}
 .meta{font-size:12.5px;color:var(--muted);margin-top:2px;display:flex;flex-wrap:wrap;align-items:center;gap:0 8px}
 .meta span{display:inline-flex;align-items:center;gap:4px}
@@ -122,6 +122,13 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:4
 .cpk .cv{font-size:12.5px;color:var(--muted);min-width:56px;text-align:right}
 .cpk input[type=color]{width:38px;height:30px;padding:0;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer}
 .auto{border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:13px;color:var(--acc)}
+ details.sec{border-top:1px solid var(--line);margin-top:6px}details.sec:first-of-type{border-top:0;margin-top:0}
+details.sec>summary{list-style:none;cursor:pointer;padding:15px 0;font-weight:600;font-size:16.5px;color:var(--acc);display:flex;justify-content:space-between;align-items:center;user-select:none}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:'';width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s;margin-right:4px}
+details.sec[open]>summary::after{transform:rotate(-135deg)}
+details.sec>.sb{padding-bottom:12px}
+.sub{margin:14px 0 2px;padding:8px 0 0;border-top:1px dashed var(--line)}.sub:first-child{border-top:0;margin-top:0}
 .lbl{font-size:12.5px;color:var(--muted);margin:10px 0 0;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .sug{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .sug .t{font-size:16px}
@@ -197,9 +204,9 @@ const addDays=(s,n)=>{const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+n);r
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const PASTEL=['#8fb3d9','#9bc4a8','#e8a0a0','#b9a3d9','#f2b987','#86c5c9','#eaa9c8','#bdd48a','#a3adbb','#dcc28e','#c9a0a0','#9db7a6'];
 const DEEP=['#2f5f9e','#2f7a52','#a33a3a','#6b4a9c','#c0651a','#1f7f8a','#a8325e','#5a7d1f','#475569','#7a5c2e'];
-const COLORS=[...DEEP,...PASTEL];
-const DEEPUI=[...DEEP,'#1f3f73','#d6b370'];
-const PRE=k=>`<span class="pre" data-pre="#1f3f73" data-k="${k}" title="Bleu profond" style="background:#1f3f73"></span><span class="pre" data-pre="#d6b370" data-k="${k}" title="Doré champagne" style="background:#d6b370"></span>`;
+const DEEPUI=[...DEEP,'#1f3f73','#d6b370','#7a1f3d','#1f4d3a','#334155','#4a2a5e','#9a5b2e','#0f4c5c','#5b2333','#3f4a2c','#8a6d1f','#2b2f4a','#1c1c24','#6b7280'];
+const COLORS=DEEPUI;
+const PRE=()=>'';
 const vivid=c=>{const i=PASTEL.indexOf(c);return i>=0&&i<DEEP.length?DEEP[i]:i>=0?`color-mix(in srgb,${c} 60%,#000)`:c};
 const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',colSwipeR:'',colSwipeL:'',bordW:'',bordCol:'',bordRad:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false,showTomorrow:true};
 
@@ -536,7 +543,7 @@ function confirmDialog(msg,cb,ok='Supprimer'){
   d.querySelector('#cok').onclick=()=>{d.remove();cb()};
 }
 const dots=cur=>c=>`<span class="dot ${cur===c?'sel':''}" data-c="${c}" style="background:${c}"></span>`;
-const paletteHtml=cur=>`<div class="lbl">Pastel</div><div class="pal">${PASTEL.map(dots(cur)).join('')}</div><div class="lbl">Classique</div><div class="pal">${DEEPUI.map(dots(cur)).join('')}</div>`;
+const paletteHtml=cur=>`<div class="pal">${DEEPUI.map(dots(cur)).join('')}</div>`;
 
 /* geste « glisser vers la gauche pour fermer » */
 function swipeClose(el,close,onlyMobile){
@@ -574,9 +581,11 @@ function openSettings(){
   if($('#spanel'))return;
   const s=S();
   const tg=(k,t)=>`<label class="tg"><span>${t}</span><input type="checkbox" data-set="${k}" ${s[k]?'checked':''}></label>`;
+  const cr=(k,t,d)=>`<div class="tg"><span>${t}</span><span class="cpk"><span class="cv" data-cv="${k}">${s[k]||'Auto'}</span><input type="color" data-set="${k}" value="${s[k]||d}"><button class="auto" data-auto="${k}">Auto</button></span></div>`;
   const scrim=document.createElement('div');scrim.id='sscrim';
   const p=document.createElement('div');p.id='spanel';
   p.innerHTML=`<div class="ph"><button class="ib" id="sback" aria-label="Fermer">${ic('back')}</button><h2>Paramètres</h2></div>
+   <details class="sec" open><summary>Général</summary><div class="sb">
    ${tg('addTop','Ajouter de nouvelles tâches en haut')}
    ${tg('starTop','Déplacer les tâches marquées d’une étoile vers le haut')}
    ${tg('sound','Lire l’alerte sonore d’achèvement')}
@@ -584,21 +593,26 @@ function openSettings(){
    ${tg('dueToday','Afficher les tâches « Échéance aujourd’hui » dans Aujourd’hui')}
    ${tg('parseDates','Reconnaître les dates dans les titres des tâches')}
    ${tg('stripDates','Supprimer les dates des titres des tâches une fois reconnues')}
-   <div class="lbl" style="margin-top:16px">Listes intelligentes</div>
+   </div></details>
+   <details class="sec"><summary>Listes intelligentes</summary><div class="sb">
    ${tg('showTomorrow','Afficher « Demain »')}
    ${tg('showImportant','Afficher « Important »')}
    ${tg('showPlanned','Afficher « Planifié »')}
    ${tg('showAll','Afficher « Toutes »')}
    ${tg('hideEmpty','Masquer automatiquement les listes intelligentes vides')}
-   <div class="tg"><span>Thème</span><select data-set="theme">${[['system','Système'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${s.theme===v?'selected':''}>${l}</option>`).join('')}</select></div>
-   <div class="lbl" style="margin-top:16px">Couleur des listes intelligentes</div><div id="accs">${paletteHtml(s.accent)}</div>
-   <div class="lbl" style="margin-top:22px">Apparence</div>
-   ${[['colText','Couleur des polices','#1f2430'],['colBg','Couleur du fond de l’appli','#e9edf3'],['colTask','Couleur du fond des tâches','#ffffff'],['colRdv','Couleur du liseré des tâches RDV pro','#1e40af'],['colRdvBg','Couleur du fond des tâches RDV pro','#eceffa'],['colSwipeR','Couleur du glissement à droite (Aujourd’hui)','#d98a00'],['colSwipeL','Couleur du glissement à gauche (Demain)','#1e40af']].map(([k,t,d])=>`<div class="tg"><span>${t}</span><span class="cpk"><span class="cv" data-cv="${k}">${s[k]||'Auto'}</span>${PRE(k)}<input type="color" data-set="${k}" value="${s[k]||d}"><button class="auto" data-auto="${k}">Auto</button></span></div>`).join('')}
-   <div class="lbl" style="margin-top:18px">Bordure des tâches</div>
+   </div></details>
+   <details class="sec"><summary>Apparence</summary><div class="sb">
+   <div class="sub"><div class="tg"><span>Thème</span><select data-set="theme">${[['system','Système'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${s.theme===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+   <div class="sub"><div class="lbl">Couleur principale</div><div id="accs">${paletteHtml(s.accent)}</div></div>
+   <div class="sub"><div class="lbl">Polices et fonds</div>${cr('colText','Couleur des polices','#1f2430')}${cr('colBg','Fond de l’appli','#e9edf3')}${cr('colTask','Fond des tâches','#ffffff')}</div>
+   <div class="sub"><div class="lbl">Tâches RDV pro</div>${cr('colRdv','Couleur du liseré','#1e40af')}${cr('colRdvBg','Couleur du fond','#eceffa')}</div>
+   <div class="sub"><div class="lbl">Glissements</div>${cr('colSwipeR','À droite (Aujourd’hui)','#d98a00')}${cr('colSwipeL','À gauche (Demain)','#1e40af')}</div>
+   <div class="sub"><div class="lbl">Bordure des tâches</div>
    <div class="tg"><span>Épaisseur</span><span class="cpk"><span class="cv" data-cv="bordW">${(+s.bordW||0)}px</span><input class="rng" type="range" min="0" max="6" step="1" data-set="bordW" data-def="0" value="${+s.bordW||0}"></span></div>
-   <div class="tg"><span>Couleur de la bordure</span><span class="cpk"><span class="cv" data-cv="bordCol">${s.bordCol||'Auto'}</span>${PRE('bordCol')}<input type="color" data-set="bordCol" value="${s.bordCol||'#c4c9d2'}"><button class="auto" data-auto="bordCol">Auto</button></span></div>
-   <div class="tg"><span>Arrondi des angles</span><span class="cpk"><span class="cv" data-cv="bordRad">${s.bordRad===''||s.bordRad==null?3:+s.bordRad}px</span><input class="rng" type="range" min="0" max="24" step="1" data-set="bordRad" data-def="3" value="${s.bordRad===''||s.bordRad==null?3:+s.bordRad}"></span></div>
-   <button class="auto" id="colreset" style="margin-top:8px">Réinitialiser l’apparence</button>`;
+   ${cr('bordCol','Couleur de la bordure','#c4c9d2')}
+   <div class="tg"><span>Arrondi des angles</span><span class="cpk"><span class="cv" data-cv="bordRad">${s.bordRad===''||s.bordRad==null?3:+s.bordRad}px</span><input class="rng" type="range" min="0" max="24" step="1" data-set="bordRad" data-def="3" value="${s.bordRad===''||s.bordRad==null?3:+s.bordRad}"></span></div></div>
+   <div class="sub"><button class="auto" id="colreset">Réinitialiser l’apparence</button></div>
+   </div></details>`;
   document.body.append(scrim,p);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{scrim.classList.add('open');p.classList.add('open')}));
   const close=()=>{
