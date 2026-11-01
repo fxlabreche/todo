@@ -1,4 +1,4 @@
-const C = 'todo-v4';
+const C = 'todo-v5';
 const FILES = ['./', 'index.html', 'supabase.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png',
   'fonts/selawk.woff2', 'fonts/selawkl.woff2', 'fonts/selawksl.woff2', 'fonts/selawksb.woff2'];
 
