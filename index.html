@@ -62,8 +62,8 @@ h1{margin:0;font-size:29px;font-weight:400;letter-spacing:-.2px;color:var(--acc)
 .zone{margin:10px 0 6px;padding:1px 8px 8px;border-radius:8px}
 .zone h3{margin:9px 0 6px}
 .zone.zn{background:color-mix(in srgb,var(--muted) 7%,transparent)}
-.zone.zm{background:color-mix(in srgb,#e0a800 10%,transparent)}
-.zone.za{background:color-mix(in srgb,#2f6fdb 8%,transparent)}
+.zone.zm{background:var(--zonem,color-mix(in srgb,#e0a800 10%,transparent))}
+.zone.za{background:var(--zonea,color-mix(in srgb,#2f6fdb 8%,transparent))}
 .zone.dz{outline:2px dashed var(--acc);outline-offset:-2px}
 .zempty{padding:12px 4px;font-size:13px;color:var(--muted);opacity:.8}
 .wrap{position:relative;margin:1px 0;border-radius:var(--br,3px);overflow:hidden}
@@ -215,7 +215,7 @@ const DEEPUI=[...DEEP,'#1f3f73','#d6b370','#7a1f3d','#1f4d3a','#334155','#4a2a5e
 const COLORS=DEEPUI;
 const PRE=()=>'';
 const vivid=c=>{const i=PASTEL.indexOf(c);return i>=0&&i<DEEP.length?DEEP[i]:i>=0?`color-mix(in srgb,${c} 60%,#000)`:c};
-const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',colSwipeR:'',colSwipeL:'',bordW:'',bordCol:'',bordRad:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false,showTomorrow:true};
+const DEF={accent:'#2f5f9e',addTop:true,starTop:true,sound:false,confirmDel:false,dueToday:true,parseDates:true,stripDates:false,theme:'system',colText:'',colBg:'',colTask:'',colRdv:'',colRdvBg:'',colZoneM:'',colZoneA:'',colSwipeR:'',colSwipeL:'',bordW:'',bordCol:'',bordRad:'',showImportant:true,showPlanned:true,showAll:true,hideEmpty:false,showTomorrow:true};
 
 let lists={},tasks={},view='myday',sel=null,settings={id:'settings',kind:'settings'},q='',showDone=true,session=null;
 const S=()=>({...DEF,...settings});
@@ -289,7 +289,7 @@ function applyTheme(){
 function applyColors(){
   const s=S(),st=document.documentElement.style;
   const set=(v,c)=>c?st.setProperty(v,c):st.removeProperty(v);
-  set('--text',s.colText);set('--mainbg',s.colBg);set('--taskbg',s.colTask);set('--rdvline',s.colRdv);set('--rdvuser',s.colRdv);set('--rdvbg',s.colRdvBg);
+  set('--text',s.colText);set('--mainbg',s.colBg);set('--taskbg',s.colTask);set('--rdvline',s.colRdv);set('--rdvuser',s.colRdv);set('--rdvbg',s.colRdvBg);set('--zonem',s.colZoneM);set('--zonea',s.colZoneA);
   set('--bw',+s.bordW>0?s.bordW+'px':'');set('--bc',s.bordCol);set('--br',s.bordRad!==''&&s.bordRad!=null?s.bordRad+'px':'');
 }
 function applyListAppearance(){
@@ -638,6 +638,7 @@ function openSettings(){
    <div class="sub"><div class="lbl">Couleur principale</div><div id="accs">${paletteHtml(s.accent)}</div></div>
    <div class="sub"><div class="lbl">Polices et fonds</div>${cr('colText','Couleur des polices','#1f2430')}${cr('colBg','Fond de l’appli','#e9edf3')}${cr('colTask','Fond des tâches','#ffffff')}</div>
    <div class="sub"><div class="lbl">Tâches RDV pro</div>${cr('colRdv','Couleur du liseré','#1e40af')}${cr('colRdvBg','Couleur du fond','#eceffa')}</div>
+   <div class="sub"><div class="lbl">Zones d’Aujourd’hui</div>${cr('colZoneM','Fond du matin','#fbf1d3')}${cr('colZoneA','Fond de l’après-midi','#e3edfb')}</div>
    <div class="sub"><div class="lbl">Glissements</div>${cr('colSwipeR','À droite (Aujourd’hui)','#d98a00')}${cr('colSwipeL','À gauche (Demain)','#1e40af')}</div>
    <div class="sub"><div class="lbl">Bordure des tâches</div>
    <div class="tg"><span>Épaisseur</span><span class="cpk"><span class="cv" data-cv="bordW">${(+s.bordW||0)}px</span><input class="rng" type="range" min="0" max="6" step="1" data-set="bordW" data-def="0" value="${+s.bordW||0}"></span></div>
@@ -663,7 +664,7 @@ function openSettings(){
   p.addEventListener('click',e=>{
     const au=e.target.closest('[data-auto],#colreset');
     if(au){
-      const ks=au.id==='colreset'?['colText','colBg','colTask','colRdv','colRdvBg','colSwipeR','colSwipeL','bordW','bordCol','bordRad']:[au.dataset.auto];
+      const ks=au.id==='colreset'?['colText','colBg','colTask','colRdv','colRdvBg','colZoneM','colZoneA','colSwipeR','colSwipeL','bordW','bordCol','bordRad']:[au.dataset.auto];
       const o={...settings,id:'settings',kind:'settings'};ks.forEach(k=>o[k]='');
       save(o);
       ks.forEach(k=>{const cv=p.querySelector(`[data-cv="${k}"]`),rg=p.querySelector(`input.rng[data-set="${k}"]`);if(rg){rg.value=rg.dataset.def;if(cv)cv.textContent=rg.dataset.def+'px'}else if(cv)cv.textContent='Auto'});
@@ -852,7 +853,7 @@ function endLDrag(e){
 }
 document.addEventListener('pointerup',endLDrag);
 document.addEventListener('pointercancel',endLDrag);
-const LIM=90,HOLD=380,GAP=2;
+const LIM=90,HOLD=380,HOLDZ=220,GAP=2;
 let lastPT='';
 document.addEventListener('pointerdown',e=>{
   lastPT=e.pointerType;
@@ -860,7 +861,7 @@ document.addEventListener('pointerdown',e=>{
   const task=e.target.closest('.task');
   if(!task||e.target.closest('button,.chk'))return;
   drag={task,id:task.dataset.id,x:e.clientX,y:e.clientY,curY:e.clientY,dx:0,mode:null,pid:e.pointerId,bg:task.parentElement.querySelector('.bg'),timer:null};
-  drag.timer=setTimeout(startReorder,HOLD);
+  drag.timer=setTimeout(startReorder,view==='myday'?HOLDZ:HOLD);
 });
 document.addEventListener('pointermove',e=>{
   if(!drag||e.pointerId!==drag.pid)return;
@@ -868,9 +869,11 @@ document.addEventListener('pointermove',e=>{
   if(drag.mode==='reorder'){moveReorder();return}
   const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
   if(!drag.mode){
-    if(Math.hypot(dx,dy)<8)return;
+    if(Math.hypot(dx,dy)<(lastPT==='mouse'?5:8))return;
     clearTimeout(drag.timer);
-    if(Math.abs(dy)>Math.abs(dx)){drag=null;return}
+    if(Math.abs(dy)>Math.abs(dx)){
+      if(lastPT==='mouse'&&reorderable()&&!drag.task.classList.contains('done')&&(view==='myday'||document.querySelectorAll('#list .wrap').length>1)){startReorder();return}
+      drag=null;return}
     drag.mode='swipe';try{drag.task.setPointerCapture(e.pointerId)}catch(_){}
   }
   drag.dx=dx;
@@ -902,9 +905,9 @@ function startReorder(){
   const rows=[...(zoneEl||document.querySelector('#list')).querySelectorAll('.wrap')].filter(w=>!w.querySelector('.task.done'));
   const start=rows.indexOf(wrapEl);
   if(start<0){drag=null;return}
-  if(rows.length<2&&!(zoneEl&&lastPT==='mouse')){const id=drag.id;drag=null;swiped=true;setTimeout(()=>swiped=false,500);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}openTaskMenu(id);return}
+  if(rows.length<2&&!zoneEl){const id=drag.id;drag=null;swiped=true;setTimeout(()=>swiped=false,500);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}openTaskMenu(id);return}
   drag.mode='reorder';
-  drag.zk=(zoneEl&&lastPT==='mouse')?zoneEl.dataset.zone:null;drag.hz=null;
+  drag.zk=zoneEl?zoneEl.dataset.zone:null;drag.hz=null;
   drag.rows=rows;drag.start=start;drag.idx=start;
   drag.rects=rows.map(r=>{const b=r.getBoundingClientRect();return{top:b.top,h:b.height}});
   drag.scroll0=$('#list').scrollTop;
