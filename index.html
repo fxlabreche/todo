@@ -541,6 +541,11 @@ function renderDetail(){
   const t=tasks[sel],el=$('#detail');
   if(!t){el.classList.remove('open');return}
   el.classList.add('open');
+  /* mémoriser le champ actif (focus, texte en cours, sélection) pour le restaurer après reconstruction */
+  const ae=document.activeElement;let keep=null;
+  if(ae&&el.contains(ae)&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')){
+    keep={id:ae.id,si:ae.dataset?ae.dataset.si:undefined,val:ae.value,s:ae.selectionStart,e:ae.selectionEnd};
+  }
   el.innerHTML=`<div class="dh"><button id="close">${ic('back',20)}Fermer</button><button id="del" style="color:#dc2626">${ic('del',20)}Supprimer</button></div>
   <input class="title" id="d-title" value="${esc(t.title)}">
   <div id="steps">${(t.steps||[]).map((s,i)=>`<div class="step"><span class="chk" style="${s.done?'background:var(--acc);border-color:var(--acc)':''};width:21px;height:21px" data-sc="${i}">${s.done?ic('check',12):''}</span><input class="s" data-si="${i}" value="${esc(s.t)}" style="${s.done?'text-decoration:line-through;color:var(--muted)':''}"><button class="sm" data-sd="${i}">${ic('x',18)}</button></div>`).join('')}</div>
@@ -554,6 +559,14 @@ function renderDetail(){
   <div class="row">${ic('list',20)}<span>Liste</span><select id="d-list" style="margin-left:auto">
     ${Object.values(lists).sort(byOrder).map(l=>`<option value="${l.id}" ${t.list===l.id?'selected':''}>${esc(l.name)}</option>`).join('')}</select></div>
   <p class="sm">Notes</p><textarea id="d-notes" placeholder="Ajouter une note">${esc(t.notes||'')}</textarea>`;
+  if(keep){
+    const n=keep.id?el.querySelector('#'+keep.id):(keep.si!==undefined?el.querySelector(`[data-si="${keep.si}"]`):null);
+    if(n){
+      if(keep.id==='newstep'||keep.id==='d-notes'||keep.id==='d-title'||keep.si!==undefined)n.value=keep.val;
+      n.focus();
+      try{n.setSelectionRange(keep.s,keep.e)}catch(e){}
+    }
+  }
 }
 
 /* ---------- Fenêtres ---------- */
