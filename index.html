@@ -1070,7 +1070,7 @@ document.addEventListener('keydown',e=>{
   const again=()=>setTimeout(()=>{const n=$('#newstep');if(n)n.focus()},0);
   if(e.target.id==='newstep'){
     const v=e.target.value.trim();
-    if(v){e.preventDefault();save({...t,steps:[...(t.steps||[]),{t:v,done:false}]});again()}
+    if(v){e.preventDefault();e.target.value='';save({...t,steps:[...(t.steps||[]),{t:v,done:false}]});again()}
     else e.target.blur();
   }else if(e.target.dataset&&e.target.dataset.si!==undefined){
     e.preventDefault();
